@@ -1,0 +1,537 @@
+
+###O codigo abaixo funciona basicamente com funções modulares que são inseridas na ultima função Gera_Decomposição
+#Há espaço para otimização uma vez que algumas funções - para a estimação das matrizes relevantes - podem simplesmente ser unidas adicionando-se um clausula se etc. 
+#Por fim, vale lembrar que para rodar o código é necessário mudar os endereços que estão nas funções 
+#para que ele busque tabelas deflacionadas em uma pasta no seu computados. 
+
+
+import pandas as pd
+import numpy as np
+
+"""Declaraçao de Funções"""
+
+def Le_MatrizTRU(sCaminho, sTabelaRecursos, sPlanilha, nLinhas, nColunas, nLinhaInicial, nColunaInicial):
+  mSheet = pd.read_excel(sCaminho+sTabelaRecursos, sheet_name=sPlanilha, header=None, index_col=None)
+  mMatriz = mSheet.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]  
+  return mMatriz
+
+def Le_VetorTRU(sCaminho, sTabelaRecursos, sPlanilha, nLinhas, nLinhaInicial, nColunaInicial):
+  mSheet = pd.read_excel(sCaminho+sTabelaRecursos, sheet_name=sPlanilha, header=None, index_col=None)
+  vVetor = mSheet.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial]
+  return vVetor
+#nao usada
+def Le_MatrizTRUImportacao(sCaminho, sTabelaRecursos, sPlanilha,  nLinhaInicial, nColunaInicial, nLinhas, nColunas):
+  mSheet = pd.read_excel(sCaminho+sTabelaRecursos, sheet_name=sPlanilha, header=None, index_col=None)
+  mMatriz = np.sum(mSheet.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas], axis = 1)  
+  return mMatriz
+
+
+def GeraMatrizDistribuicao(mMatrizEntrada):
+  vTotalProduto = np.sum(mMatrizEntrada, axis=1)
+  mMatrizSaida = mMatrizEntrada / vTotalProduto [:,None]
+  mMatrizSaida = np.nan_to_num(mMatrizSaida, nan=0, posinf=0, neginf=0) 
+  return mMatrizSaida
+
+def CalculaDistribuicao(vVetorEntrada, mMatrizEntrada):
+  mMatrizSaida = vVetorEntrada[:,None] * mMatrizEntrada
+  return mMatrizSaida
+
+def CalculaDistribuicaoMargem(vVetorEntrada, mMatrizEntrada, vMargem):
+  vPropMargem = vVetorEntrada[ vMargem[0]:vMargem[1]+1 , None] / np.sum(vVetorEntrada[vMargem[0]:vMargem[1]+1 , None])
+  mMatrizSaida = vVetorEntrada[:,None] * mMatrizEntrada
+  mMargemDistribuida = np.sum(mMatrizSaida[0:vMargem[0],:], axis=0) + np.sum(mMatrizSaida[vMargem[1]+1:, :], axis =0)
+  mMatrizSaida[vMargem[0]:vMargem[1]+1,:] = mMargemDistribuida[None, :] * vPropMargem * (-1.)
+  return mMatrizSaida
+
+def SeparaOferta(mMatriz, nSetores):
+  vVetor = np.sum(mMatriz, axis=0)
+  vOfertaConsumoIntermediario = vVetor[None, 0:nSetores]
+  vOfertaDemandaFinal = vVetor[None, nSetores:] 
+  return vOfertaConsumoIntermediario, vOfertaDemandaFinal
+ 
+#esta funcao repete o codigo de estimacao (adaptado para 51 setores) e cospe a matriz de Leontief
+def Gera_Leontief(nAnoMIP):
+  sCaminho='C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/'
+  nAnoMIP_Auxiliar = int(nAnoMIP)
+  nProdutos=107
+  nSetores=51
+  nPosicaoMargemComercio=2
+  nPosicaoMargemTransporte = 3
+  nPosicaoImportacao =1
+  nLinhaInicial=1
+  nLinhasVA=12
+  nLinhaRendaTrabalho = 1
+  nColunasDemandaFinal = 7
+  nLinhaOcupacoes= 11
+  vPosicaoMargemComercio   = [88,88]
+  vPosicaoMargemTransporte = [89,89]
+
+ 
+
+
+# Lendo Tabela de Recursos
+  sTabelaRecursos     = str(nAnoMIP)+'_RECURSOS_'+str(nSetores)+'x'+str(nSetores)+'_Precos_2019.xlsx'
+  mProducao           =  Le_MatrizTRU(sCaminho, sTabelaRecursos,'producao', nProdutos, nSetores, 1, 1)
+  vMargemComercio     = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, nPosicaoMargemComercio)
+  vMargemTransporte   = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, nPosicaoMargemTransporte)
+ 
+  vImpostoImportacao  = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 4)
+  vIPI                = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 5)
+  vICMS               = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 6)
+  vOI                 = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 7)
+  
+  #ajuste para a tabela de importacao de 2000-2009 e 2010 2019
+  if nAnoMIP_Auxiliar <= 2009:
+       vImportacao_CIF         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 1)
+       vImportacao_Bens         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 2)
+       vImportacao_Servicos         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 3 )
+       vImportacao = vImportacao_CIF + vImportacao_Bens+ vImportacao_Servicos
+  else:
+       vImportacao         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, nPosicaoImportacao)
+  
+               
+  # Lendo Tabela de usos
+  sTabelaUsos         = str(nAnoMIP)+'_USOS_'+str(nSetores)+'x'+str(nSetores)+'_Precos_2019.xlsx'
+  mUsosPrecosMercado  = Le_MatrizTRU(sCaminho, sTabelaUsos,'CI', nProdutos, nSetores, 1, 1)
+  #mVA                 = Le_MatrizTRU(sCaminho, sTabelaUsos,'VA', nLinhasVA, nSetores, 1, 1)
+  vExportacaoBens     = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 1)
+  vExportacaoServicos = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 2)
+  vExportacao         = vExportacaoBens + vExportacaoServicos
+  vConsumoGoverno     = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 3)
+  vConsumoISFLSF      = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 4)
+  vConsumoFamilias    = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 5)
+  vFBCF               = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 6)
+  vVariacaoEstoque    = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 7)
+  
+  mVA                = np.sum(mProducao, axis = 0) - np.sum(mUsosPrecosMercado, axis = 0)
+ 
+
+
+
+  mDemanda = np.concatenate((mUsosPrecosMercado, vExportacao[:,None], vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], vVariacaoEstoque[:,None]), axis=1)
+  mDemandaSemEstoque = np.concatenate((mUsosPrecosMercado, vExportacao[:,None], vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], np.zeros((nProdutos, 1))) , axis=1)  
+  mMatrizDistribuicao = GeraMatrizDistribuicao(mDemandaSemEstoque)
+  mIPIDistribuida     = CalculaDistribuicao(vIPI, mMatrizDistribuicao)
+  mICMSDistribuida    = CalculaDistribuicao(vICMS, mMatrizDistribuicao)
+  mOIDistribuida      = CalculaDistribuicao(vOI, mMatrizDistribuicao)
+
+  mMargemComercioDistribuida           = CalculaDistribuicaoMargem(vMargemComercio, mMatrizDistribuicao,vPosicaoMargemComercio)
+  mMargemTransporteDistribuida         = CalculaDistribuicaoMargem(vMargemTransporte, mMatrizDistribuicao,vPosicaoMargemTransporte)
+ 
+  mDemandaSemEstoqueSemExportacao = np.concatenate((mUsosPrecosMercado, np.zeros((nProdutos, 1)), vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], np.zeros((nProdutos, 1))) , axis=1) 
+
+  mMatrizDistribuicaoImportacao = GeraMatrizDistribuicao(mDemandaSemEstoqueSemExportacao)
+  mImportacaoDistribuida    = CalculaDistribuicao(vImportacao, mMatrizDistribuicaoImportacao)
+  mImpostoImportacaoDistribuido    = CalculaDistribuicao(vImpostoImportacao, mMatrizDistribuicaoImportacao)
+
+
+  mDemandaPrecosBasicos = mDemanda - mMargemComercioDistribuida - mMargemTransporteDistribuida - mIPIDistribuida - mICMSDistribuida -  mOIDistribuida - mImportacaoDistribuida - mImpostoImportacaoDistribuido
+  
+
+  
+  ###ALTERANDO A MATRIZ U
+  
+  aBaixaTec = mDemandaPrecosBasicos[:,0] + mDemandaPrecosBasicos[:,1] + mDemandaPrecosBasicos[:,6]+ mDemandaPrecosBasicos[:,7]+ mDemandaPrecosBasicos[:,8]\
+      + mDemandaPrecosBasicos[:,9] +mDemandaPrecosBasicos[:,10] +mDemandaPrecosBasicos[:,11]+mDemandaPrecosBasicos[:,12]+mDemandaPrecosBasicos[:,17]+mDemandaPrecosBasicos[:,22]
+  
+  aMediaBaixaTec =  mDemandaPrecosBasicos[:,23] + mDemandaPrecosBasicos[:,26] + mDemandaPrecosBasicos[:,27] + mDemandaPrecosBasicos[:,28] + mDemandaPrecosBasicos[:,29]   
+  
+  aMediaAltaTec = mDemandaPrecosBasicos[:,33] + mDemandaPrecosBasicos[:,34]
+  
+  aAltaTec = mDemandaPrecosBasicos[:,32]
+
+  aBaixaTec = mDemandaPrecosBasicos[:,0].reshape((107,1)) + mDemandaPrecosBasicos[:,1].reshape((107,1)) + mDemandaPrecosBasicos[:,6].reshape((107,1))+ mDemandaPrecosBasicos[:,7].reshape((107,1))+ mDemandaPrecosBasicos[:,8].reshape((107,1))\
+      + mDemandaPrecosBasicos[:,9].reshape((107,1)) +mDemandaPrecosBasicos[:,10].reshape((107,1)) +mDemandaPrecosBasicos[:,11].reshape((107,1))+mDemandaPrecosBasicos[:,12].reshape((107,1))+mDemandaPrecosBasicos[:,17].reshape((107,1))+mDemandaPrecosBasicos[:,22].reshape((107,1))
+  
+  aMediaBaixaTec =  mDemandaPrecosBasicos[:,23].reshape((107,1)) + mDemandaPrecosBasicos[:,26].reshape((107,1)) + mDemandaPrecosBasicos[:,27].reshape((107,1)) + mDemandaPrecosBasicos[:,28].reshape((107,1)) + mDemandaPrecosBasicos[:,29].reshape((107,1))   
+  
+  aMediaAltaTec = mDemandaPrecosBasicos[:,33].reshape((107,1)) + mDemandaPrecosBasicos[:,34].reshape((107,1))
+  
+  aAltaTec = mDemandaPrecosBasicos[:,32].reshape((107,1))
+   
+      
+  mU = np.concatenate((aBaixaTec, aMediaBaixaTec, aMediaAltaTec,aAltaTec, mDemandaPrecosBasicos[:,2].reshape((107,1)), mDemandaPrecosBasicos[:,3].reshape((107,1)), mDemandaPrecosBasicos[:,4].reshape((107,1)), mDemandaPrecosBasicos[:,5].reshape((107,1)),\
+                       mDemandaPrecosBasicos[:,13].reshape((107,1)),mDemandaPrecosBasicos[:,14].reshape((107,1)),mDemandaPrecosBasicos[:,15].reshape((107,1)),mDemandaPrecosBasicos[:,16].reshape((107,1)),\
+                           mDemandaPrecosBasicos[:,18].reshape((107,1)),mDemandaPrecosBasicos[:,19].reshape((107,1)),mDemandaPrecosBasicos[:,20].reshape((107,1)),mDemandaPrecosBasicos[:,21].reshape((107,1)),mDemandaPrecosBasicos[:,24].reshape((107,1)),\
+                             mDemandaPrecosBasicos[:,25].reshape((107,1)),mDemandaPrecosBasicos[:,30].reshape((107,1)),mDemandaPrecosBasicos[:,31].reshape((107,1)),\
+                               mDemandaPrecosBasicos[:,35].reshape((107,1)),mDemandaPrecosBasicos[:,36].reshape((107,1)),mDemandaPrecosBasicos[:,37].reshape((107,1)),mDemandaPrecosBasicos[:,38].reshape((107,1)),mDemandaPrecosBasicos[:,39].reshape((107,1)),\
+                                   mDemandaPrecosBasicos[:,40].reshape((107,1)),mDemandaPrecosBasicos[:,41].reshape((107,1)),mDemandaPrecosBasicos[:,42].reshape((107,1)),mDemandaPrecosBasicos[:,43].reshape((107,1)),mDemandaPrecosBasicos[:,44].reshape((107,1)),\
+                                       mDemandaPrecosBasicos[:,45].reshape((107,1)),mDemandaPrecosBasicos[:,46].reshape((107,1)),mDemandaPrecosBasicos[:,47].reshape((107,1)),mDemandaPrecosBasicos[:,48].reshape((107,1)),mDemandaPrecosBasicos[:,49].reshape((107,1)),\
+                                        mDemandaPrecosBasicos[:,50].reshape((107,1))),axis = 1)
+
+  
+  mE = mDemandaPrecosBasicos[0:nProdutos, nSetores:]
+
+
+  #MODIFICANDO A MATRIZ DE PRODUCAO
+  
+  aBaixaTecProd = mProducao[:,0].reshape((107,1)) + mProducao[:,1].reshape((107,1)) + mProducao[:,6].reshape((107,1))+ mProducao[:,7].reshape((107,1))+ mProducao[:,8].reshape((107,1))\
+      + mProducao[:,9].reshape((107,1)) +mProducao[:,10].reshape((107,1)) +mProducao[:,11].reshape((107,1))+mProducao[:,12].reshape((107,1))+mProducao[:,17].reshape((107,1))+mProducao[:,22].reshape((107,1))
+  
+  aMediaBaixaTecProd =  mProducao[:,23].reshape((107,1)) + mProducao[:,26].reshape((107,1)) + mProducao[:,27].reshape((107,1)) + mProducao[:,28].reshape((107,1)) + mProducao[:,29].reshape((107,1))   
+  
+  aMediaAltaTecProd = mProducao[:,33].reshape((107,1)) + mProducao[:,34].reshape((107,1))
+  
+  aAltaTecProd = mProducao[:,32].reshape((107,1))
+  
+  mProducaoModificada =   np.concatenate((aBaixaTecProd, aMediaBaixaTecProd, aMediaAltaTecProd, aAltaTecProd, mProducao[:,2].reshape((107,1)), mProducao[:,3].reshape((107,1)), mProducao[:,4].reshape((107,1)), mProducao[:,5].reshape((107,1)),\
+                            mProducao[:,13].reshape((107,1)),mProducao[:,14].reshape((107,1)),mProducao[:,15].reshape((107,1)),mProducao[:,16].reshape((107,1)),\
+                             mProducao[:,18].reshape((107,1)),mProducao[:,19].reshape((107,1)),mProducao[:,20].reshape((107,1)),mProducao[:,21].reshape((107,1)),mProducao[:,24].reshape((107,1)),\
+                              mProducao[:,25].reshape((107,1)),mProducao[:,30].reshape((107,1)),mProducao[:,31].reshape((107,1)),\
+                               mProducao[:,35].reshape((107,1)),mProducao[:,36].reshape((107,1)),mProducao[:,37].reshape((107,1)),mProducao[:,38].reshape((107,1)),mProducao[:,39].reshape((107,1)),\
+                                 mProducao[:,40].reshape((107,1)),mProducao[:,41].reshape((107,1)),mProducao[:,42].reshape((107,1)),mProducao[:,43].reshape((107,1)),mProducao[:,44].reshape((107,1)),\
+                                    mProducao[:,45].reshape((107,1)),mProducao[:,46].reshape((107,1)),mProducao[:,47].reshape((107,1)),mProducao[:,48].reshape((107,1)),mProducao[:,49].reshape((107,1)),\
+                                     mProducao[:,50].reshape((107,1))), axis = 1)  
+
+  
+  
+
+
+  vX = np.sum(mProducaoModificada, axis = 0)
+  #vX = mVA[10,:]
+  
+  
+  
+  
+  mXChapeu = np.diagflat(1/vX)
+  mB = np.dot(mU,mXChapeu)
+
+  mV = mProducaoModificada.T
+  
+  
+  
+  
+  vQ = np.sum(mV, axis=0)
+  mD = np.dot(mV, np.diagflat(1/vQ)).astype(float)
+  mA = np.dot(mD,mB).astype(float)
+  mY = np.dot(mD,mE).astype(float)
+  mZ = np.dot(mD,mU).astype(float)
+  mI = np.eye(36)
+  mLeontief = np.linalg.inv(mI - mA) 
+  return mLeontief
+
+#basicamente mesma operacao da funcao acima, mas agora como resultado o vetor Demanda Final
+def Gera_DemandaFinal(nAnoMIP):
+  sCaminho='C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/'
+  nAnoMIP_Auxiliar = int(nAnoMIP)
+  nProdutos=107
+  nSetores=51
+  nPosicaoMargemComercio=2
+  nPosicaoMargemTransporte = 3
+  nPosicaoImportacao =1
+  nLinhaInicial=1
+  nLinhasVA=12
+  nLinhaRendaTrabalho = 1
+  nColunasDemandaFinal = 7
+  nLinhaOcupacoes= 11
+  vPosicaoMargemComercio   = [88,88]
+  vPosicaoMargemTransporte = [89,89]
+
+ 
+
+
+# Lendo Tabela de Recursos
+  sTabelaRecursos     = str(nAnoMIP)+'_RECURSOS_'+str(nSetores)+'x'+str(nSetores)+'_Precos_2019.xlsx'
+  mProducao           =  Le_MatrizTRU(sCaminho, sTabelaRecursos,'producao', nProdutos, nSetores, 1, 1)
+  vMargemComercio     = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, nPosicaoMargemComercio)
+  vMargemTransporte   = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, nPosicaoMargemTransporte)
+ 
+  vImpostoImportacao  = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 4)
+  vIPI                = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 5)
+  vICMS               = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 6)
+  vOI                 = Le_VetorTRU(sCaminho, sTabelaRecursos, 'oferta', nProdutos, nLinhaInicial, 7)
+  
+  #ajuste para a tabela de importacao de 2000-2009 e 2010 2019
+  if nAnoMIP_Auxiliar <= 2009:
+       vImportacao_CIF         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 1)
+       vImportacao_Bens         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 2)
+       vImportacao_Servicos         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, 3 )
+       vImportacao = vImportacao_CIF + vImportacao_Bens+ vImportacao_Servicos
+  else:
+       vImportacao         =  Le_VetorTRU(sCaminho, sTabelaRecursos, 'importacao', nProdutos, nLinhaInicial, nPosicaoImportacao)
+  
+               
+  # Lendo Tabela de usos
+  sTabelaUsos         = str(nAnoMIP)+'_USOS_'+str(nSetores)+'x'+str(nSetores)+'_Precos_2019.xlsx'
+  mUsosPrecosMercado  = Le_MatrizTRU(sCaminho, sTabelaUsos,'CI', nProdutos, nSetores, 1, 1)
+  #mVA                 = Le_MatrizTRU(sCaminho, sTabelaUsos,'VA', nLinhasVA, nSetores, 1, 1)
+  vExportacaoBens     = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 1)
+  vExportacaoServicos = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 2)
+  vExportacao         = vExportacaoBens + vExportacaoServicos
+  vConsumoGoverno     = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 3)
+  vConsumoISFLSF      = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 4)
+  vConsumoFamilias    = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 5)
+  vFBCF               = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 6)
+  vVariacaoEstoque    = Le_VetorTRU(sCaminho, sTabelaUsos, 'demanda', nProdutos, 1, 7)
+  
+  mVA                = np.sum(mProducao, axis = 0) - np.sum(mUsosPrecosMercado, axis = 0)
+ 
+
+
+
+  mDemanda = np.concatenate((mUsosPrecosMercado, vExportacao[:,None], vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], vVariacaoEstoque[:,None]), axis=1)
+  mDemandaSemEstoque = np.concatenate((mUsosPrecosMercado, vExportacao[:,None], vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], np.zeros((nProdutos, 1))) , axis=1)  
+  mMatrizDistribuicao = GeraMatrizDistribuicao(mDemandaSemEstoque)
+  mIPIDistribuida     = CalculaDistribuicao(vIPI, mMatrizDistribuicao)
+  mICMSDistribuida    = CalculaDistribuicao(vICMS, mMatrizDistribuicao)
+  mOIDistribuida      = CalculaDistribuicao(vOI, mMatrizDistribuicao)
+
+  mMargemComercioDistribuida           = CalculaDistribuicaoMargem(vMargemComercio, mMatrizDistribuicao,vPosicaoMargemComercio)
+  mMargemTransporteDistribuida         = CalculaDistribuicaoMargem(vMargemTransporte, mMatrizDistribuicao,vPosicaoMargemTransporte)
+ 
+  mDemandaSemEstoqueSemExportacao = np.concatenate((mUsosPrecosMercado, np.zeros((nProdutos, 1)), vConsumoGoverno[:,None], vConsumoISFLSF[:,None], vConsumoFamilias[:,None], vFBCF[:,None], np.zeros((nProdutos, 1))) , axis=1) 
+
+  mMatrizDistribuicaoImportacao = GeraMatrizDistribuicao(mDemandaSemEstoqueSemExportacao)
+  mImportacaoDistribuida    = CalculaDistribuicao(vImportacao, mMatrizDistribuicaoImportacao)
+  mImpostoImportacaoDistribuido    = CalculaDistribuicao(vImpostoImportacao, mMatrizDistribuicaoImportacao)
+
+
+  mDemandaPrecosBasicos = mDemanda - mMargemComercioDistribuida - mMargemTransporteDistribuida - mIPIDistribuida - mICMSDistribuida -  mOIDistribuida - mImportacaoDistribuida - mImpostoImportacaoDistribuido
+  
+
+  
+  ###ALTERANDO A MATRIZ U
+  
+  aBaixaTec = mDemandaPrecosBasicos[:,0] + mDemandaPrecosBasicos[:,1] + mDemandaPrecosBasicos[:,6]+ mDemandaPrecosBasicos[:,7]+ mDemandaPrecosBasicos[:,8]\
+      + mDemandaPrecosBasicos[:,9] +mDemandaPrecosBasicos[:,10] +mDemandaPrecosBasicos[:,11]+mDemandaPrecosBasicos[:,12]+mDemandaPrecosBasicos[:,17]+mDemandaPrecosBasicos[:,22]
+  
+  aMediaBaixaTec =  mDemandaPrecosBasicos[:,23] + mDemandaPrecosBasicos[:,26] + mDemandaPrecosBasicos[:,27] + mDemandaPrecosBasicos[:,28] + mDemandaPrecosBasicos[:,29]   
+  
+  aMediaAltaTec = mDemandaPrecosBasicos[:,33] + mDemandaPrecosBasicos[:,34]
+  
+  aAltaTec = mDemandaPrecosBasicos[:,32]
+
+  aBaixaTec = mDemandaPrecosBasicos[:,0].reshape((107,1)) + mDemandaPrecosBasicos[:,1].reshape((107,1)) + mDemandaPrecosBasicos[:,6].reshape((107,1))+ mDemandaPrecosBasicos[:,7].reshape((107,1))+ mDemandaPrecosBasicos[:,8].reshape((107,1))\
+      + mDemandaPrecosBasicos[:,9].reshape((107,1)) +mDemandaPrecosBasicos[:,10].reshape((107,1)) +mDemandaPrecosBasicos[:,11].reshape((107,1))+mDemandaPrecosBasicos[:,12].reshape((107,1))+mDemandaPrecosBasicos[:,17].reshape((107,1))+mDemandaPrecosBasicos[:,22].reshape((107,1))
+  
+  aMediaBaixaTec =  mDemandaPrecosBasicos[:,23].reshape((107,1)) + mDemandaPrecosBasicos[:,26].reshape((107,1)) + mDemandaPrecosBasicos[:,27].reshape((107,1)) + mDemandaPrecosBasicos[:,28].reshape((107,1)) + mDemandaPrecosBasicos[:,29].reshape((107,1))   
+  
+  aMediaAltaTec = mDemandaPrecosBasicos[:,33].reshape((107,1)) + mDemandaPrecosBasicos[:,34].reshape((107,1))
+  
+  aAltaTec = mDemandaPrecosBasicos[:,32].reshape((107,1))
+   
+      
+  mU = np.concatenate((aBaixaTec, aMediaBaixaTec, aMediaAltaTec,aAltaTec, mDemandaPrecosBasicos[:,2].reshape((107,1)), mDemandaPrecosBasicos[:,3].reshape((107,1)), mDemandaPrecosBasicos[:,4].reshape((107,1)), mDemandaPrecosBasicos[:,5].reshape((107,1)),\
+                       mDemandaPrecosBasicos[:,13].reshape((107,1)),mDemandaPrecosBasicos[:,14].reshape((107,1)),mDemandaPrecosBasicos[:,15].reshape((107,1)),mDemandaPrecosBasicos[:,16].reshape((107,1)),\
+                           mDemandaPrecosBasicos[:,18].reshape((107,1)),mDemandaPrecosBasicos[:,19].reshape((107,1)),mDemandaPrecosBasicos[:,20].reshape((107,1)),mDemandaPrecosBasicos[:,21].reshape((107,1)),mDemandaPrecosBasicos[:,24].reshape((107,1)),\
+                             mDemandaPrecosBasicos[:,25].reshape((107,1)),mDemandaPrecosBasicos[:,30].reshape((107,1)),mDemandaPrecosBasicos[:,31].reshape((107,1)),\
+                               mDemandaPrecosBasicos[:,35].reshape((107,1)),mDemandaPrecosBasicos[:,36].reshape((107,1)),mDemandaPrecosBasicos[:,37].reshape((107,1)),mDemandaPrecosBasicos[:,38].reshape((107,1)),mDemandaPrecosBasicos[:,39].reshape((107,1)),\
+                                   mDemandaPrecosBasicos[:,40].reshape((107,1)),mDemandaPrecosBasicos[:,41].reshape((107,1)),mDemandaPrecosBasicos[:,42].reshape((107,1)),mDemandaPrecosBasicos[:,43].reshape((107,1)),mDemandaPrecosBasicos[:,44].reshape((107,1)),\
+                                       mDemandaPrecosBasicos[:,45].reshape((107,1)),mDemandaPrecosBasicos[:,46].reshape((107,1)),mDemandaPrecosBasicos[:,47].reshape((107,1)),mDemandaPrecosBasicos[:,48].reshape((107,1)),mDemandaPrecosBasicos[:,49].reshape((107,1)),\
+                                        mDemandaPrecosBasicos[:,50].reshape((107,1))),axis = 1)
+
+  
+  mE = mDemandaPrecosBasicos[0:nProdutos, nSetores:]
+
+
+  #MODIFICANDO A MATRIZ DE PRODUCAO
+  
+  aBaixaTecProd = mProducao[:,0].reshape((107,1)) + mProducao[:,1].reshape((107,1)) + mProducao[:,6].reshape((107,1))+ mProducao[:,7].reshape((107,1))+ mProducao[:,8].reshape((107,1))\
+      + mProducao[:,9].reshape((107,1)) +mProducao[:,10].reshape((107,1)) +mProducao[:,11].reshape((107,1))+mProducao[:,12].reshape((107,1))+mProducao[:,17].reshape((107,1))+mProducao[:,22].reshape((107,1))
+  
+  aMediaBaixaTecProd =  mProducao[:,23].reshape((107,1)) + mProducao[:,26].reshape((107,1)) + mProducao[:,27].reshape((107,1)) + mProducao[:,28].reshape((107,1)) + mProducao[:,29].reshape((107,1))   
+  
+  aMediaAltaTecProd = mProducao[:,33].reshape((107,1)) + mProducao[:,34].reshape((107,1))
+  
+  aAltaTecProd = mProducao[:,32].reshape((107,1))
+  
+  mProducaoModificada =   np.concatenate((aBaixaTecProd, aMediaBaixaTecProd, aMediaAltaTecProd, aAltaTecProd, mProducao[:,2].reshape((107,1)), mProducao[:,3].reshape((107,1)), mProducao[:,4].reshape((107,1)), mProducao[:,5].reshape((107,1)),\
+                            mProducao[:,13].reshape((107,1)),mProducao[:,14].reshape((107,1)),mProducao[:,15].reshape((107,1)),mProducao[:,16].reshape((107,1)),\
+                             mProducao[:,18].reshape((107,1)),mProducao[:,19].reshape((107,1)),mProducao[:,20].reshape((107,1)),mProducao[:,21].reshape((107,1)),mProducao[:,24].reshape((107,1)),\
+                              mProducao[:,25].reshape((107,1)),mProducao[:,30].reshape((107,1)),mProducao[:,31].reshape((107,1)),\
+                               mProducao[:,35].reshape((107,1)),mProducao[:,36].reshape((107,1)),mProducao[:,37].reshape((107,1)),mProducao[:,38].reshape((107,1)),mProducao[:,39].reshape((107,1)),\
+                                 mProducao[:,40].reshape((107,1)),mProducao[:,41].reshape((107,1)),mProducao[:,42].reshape((107,1)),mProducao[:,43].reshape((107,1)),mProducao[:,44].reshape((107,1)),\
+                                    mProducao[:,45].reshape((107,1)),mProducao[:,46].reshape((107,1)),mProducao[:,47].reshape((107,1)),mProducao[:,48].reshape((107,1)),mProducao[:,49].reshape((107,1)),\
+                                     mProducao[:,50].reshape((107,1))), axis = 1)  
+
+  
+  
+
+
+  vX = np.sum(mProducaoModificada, axis = 0)
+  #vX = mVA[10,:]
+  
+  
+  
+  
+  mXChapeu = np.diagflat(1/vX)
+  mB = np.dot(mU,mXChapeu)
+
+  mV = mProducaoModificada.T
+  
+  
+  
+  
+  vQ = np.sum(mV, axis=0)
+  mD = np.dot(mV, np.diagflat(1/vQ)).astype(float)
+  mA = np.dot(mD,mB).astype(float)
+  mY = np.dot(mD,mE).astype(float)
+
+  vDemandaFinal = np.sum(mY,axis=1) 
+  return vDemandaFinal.reshape((36,1))
+
+
+#basicamente mesma operacao da funcao acima, mas agora como resultado o vetor X
+def Gera_X(nAnoMIP):
+    sCaminho='C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/'
+    nProdutos=107
+    nSetores=51
+
+    sTabelaRecursos     = str(nAnoMIP)+'_RECURSOS_'+str(nSetores)+'x'+str(nSetores)+'_Precos_2019.xlsx'
+ 
+    mProducao           =  Le_MatrizTRU(sCaminho, sTabelaRecursos,'producao', nProdutos, nSetores, 1, 1)
+
+    #MODIFICANDO A MATRIZ DE PRODUCAO
+  
+    aBaixaTecProd = mProducao[:,0].reshape((107,1)) + mProducao[:,1].reshape((107,1)) + mProducao[:,6].reshape((107,1))+ mProducao[:,7].reshape((107,1))+ mProducao[:,8].reshape((107,1))\
+      + mProducao[:,9].reshape((107,1)) +mProducao[:,10].reshape((107,1)) +mProducao[:,11].reshape((107,1))+mProducao[:,12].reshape((107,1))+mProducao[:,17].reshape((107,1))+mProducao[:,22].reshape((107,1))
+  
+    aMediaBaixaTecProd =  mProducao[:,23].reshape((107,1)) + mProducao[:,26].reshape((107,1)) + mProducao[:,27].reshape((107,1)) + mProducao[:,28].reshape((107,1)) + mProducao[:,29].reshape((107,1))   
+  
+    aMediaAltaTecProd = mProducao[:,33].reshape((107,1)) + mProducao[:,34].reshape((107,1))
+  
+    aAltaTecProd = mProducao[:,32].reshape((107,1))
+  
+    mProducaoModificada =   np.concatenate((aBaixaTecProd, aMediaBaixaTecProd, aMediaAltaTecProd, aAltaTecProd, mProducao[:,2].reshape((107,1)), mProducao[:,3].reshape((107,1)), mProducao[:,4].reshape((107,1)), mProducao[:,5].reshape((107,1)),\
+                            mProducao[:,13].reshape((107,1)),mProducao[:,14].reshape((107,1)),mProducao[:,15].reshape((107,1)),mProducao[:,16].reshape((107,1)),\
+                             mProducao[:,18].reshape((107,1)),mProducao[:,19].reshape((107,1)),mProducao[:,20].reshape((107,1)),mProducao[:,21].reshape((107,1)),mProducao[:,24].reshape((107,1)),\
+                              mProducao[:,25].reshape((107,1)),mProducao[:,30].reshape((107,1)),mProducao[:,31].reshape((107,1)),\
+                               mProducao[:,35].reshape((107,1)),mProducao[:,36].reshape((107,1)),mProducao[:,37].reshape((107,1)),mProducao[:,38].reshape((107,1)),mProducao[:,39].reshape((107,1)),\
+                                 mProducao[:,40].reshape((107,1)),mProducao[:,41].reshape((107,1)),mProducao[:,42].reshape((107,1)),mProducao[:,43].reshape((107,1)),mProducao[:,44].reshape((107,1)),\
+                                    mProducao[:,45].reshape((107,1)),mProducao[:,46].reshape((107,1)),mProducao[:,47].reshape((107,1)),mProducao[:,48].reshape((107,1)),mProducao[:,49].reshape((107,1)),\
+                                     mProducao[:,50].reshape((107,1))), axis = 1)  
+
+  
+  
+
+
+    vX = np.sum(mProducaoModificada, axis = 0)
+    return vX
+
+#FUNCAO RESPONSAVEL POR DECOMPOR MUDANCAS NO VETOR X EM MUDANCAS TECNOLOGICAS E MUDANCAS NA DEMANDA FINAL
+def Gera_Decomposicao(ano0,ano1,sLabel):
+    
+    
+    #LEONTIEF DOS ANOS COMPARADOS
+    mLeontief0       = Gera_Leontief(ano0)
+    mLeontief1       = Gera_Leontief(ano1)
+    
+    #DEMANDA FINAL DOS ANOS COMPARADOS
+    vDemandaFinal0   = Gera_DemandaFinal(ano0)
+    vDemandaFinal1   = Gera_DemandaFinal(ano1)
+    
+    #VETOR X DOS ANOS COMPARADOS
+    vX0              = Gera_X(ano0)
+    vX1              = Gera_X(ano1)
+    
+    #VARIACAO ENTRE OS ANOS COMPARADOS
+    deltaL = mLeontief1  - mLeontief0 
+    deltaX = vX1[:,None] - vX0[:,None]
+    deltaF = vDemandaFinal1 - vDemandaFinal0
+
+
+    #SOMA DAS MATRIZES LEONTIEF
+    sSomaL = mLeontief0 + mLeontief1
+    
+    #SOMA DOS VETORES DE DEMANDA FINAL
+    sSomaF = vDemandaFinal0 + vDemandaFinal1
+
+
+    #MUDANCA TECNOLOGICA
+    mudanca_tec           = np.dot(deltaL, sSomaF)
+    
+    #MUDANCA NA DEMANDA FINAL
+    mudanca_demanda_final = np.dot(sSomaL, deltaF)
+
+    #VARIACAO DE ACORDO COM A FORMULA (É PRECISO FAZER A MEDIA DOS DOIS COMPONENTES)
+    variacao = (1/2)*mudanca_tec + (1/2)*mudanca_demanda_final
+    
+    #INSERI UMA ULTIMA COLUNA PARA SABER SE OS RESULTADOS SAO CONSISTENTES (É PARA DAR 0)
+    checagem = (variacao - deltaX)
+    
+    #CRESCIMENTO
+    deltaX_porcentagem = deltaX
+    
+    #A FUNCAO RETORNA UMA MATRIZ EM QUE A PRIMEIRA COLUNA É A VARIACAO DE VX, A SEGUNDA E TERCEIRA OS DOIS COMPONENTES DA FORMULA E A QUARTA A COLUNA DE CHECAGEM
+    resultado = np.column_stack((deltaX_porcentagem, ((1/2)*mudanca_tec),((1/2)*mudanca_demanda_final),checagem))
+    
+    cLabels = ["DeltaX", "Mudança na Tecnologia", "Mudança na Demanda Final","Checagem"] 
+    
+    dPlanilha = pd.ExcelWriter("C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/Resultado_Decomposição/Bruto/"+"Resultados_Decomposição_"+str(ano0)+"_X_"+str(ano1)+".xlsx")
+    df1 = pd.DataFrame(resultado, index=sLabel, columns=cLabels, dtype=float)
+    df1.to_excel(dPlanilha, sheet_name = str(ano0)+"X"+str(ano1), header = True, index = True)
+    dPlanilha.save()  
+    return resultado
+def Gera_Decomposicao_porcentagem(ano0,ano1, sLabel):
+    
+    
+    #LEONTIEF DOS ANOS COMPARADOS
+    mLeontief0       = Gera_Leontief(ano0)
+    mLeontief1       = Gera_Leontief(ano1)
+    
+    #DEMANDA FINAL DOS ANOS COMPARADOS
+    vDemandaFinal0   = Gera_DemandaFinal(ano0)
+    vDemandaFinal1   = Gera_DemandaFinal(ano1)
+    
+    #VETOR X DOS ANOS COMPARADOS
+    vX0              = Gera_X(ano0)
+    vX1              = Gera_X(ano1)
+    
+    #VARIACAO ENTRE OS ANOS COMPARADOS
+    deltaL = mLeontief1  - mLeontief0 
+    deltaX = vX1[:,None] - vX0[:,None]
+    deltaF = vDemandaFinal1 - vDemandaFinal0
+
+
+    #SOMA DAS MATRIZES LEONTIEF
+    sSomaL = mLeontief0 + mLeontief1
+    
+    #SOMA DOS VETORES DE DEMANDA FINAL
+    sSomaF = vDemandaFinal0 + vDemandaFinal1
+
+
+    #MUDANCA TECNOLOGICA
+    mudanca_tec           = np.dot(deltaL, sSomaF)
+    
+    #MUDANCA NA DEMANDA FINAL
+    mudanca_demanda_final = np.dot(sSomaL, deltaF)
+
+    #VARIACAO DE ACORDO COM A FORMULA (É PRECISO FAZER A MEDIA DOS DOIS COMPONENTES)
+    variacao = (50)*mudanca_tec/deltaX + (50)*mudanca_demanda_final/deltaX
+    
+    #INSERI UMA ULTIMA COLUNA PARA SABER SE OS RESULTADOS SAO CONSISTENTES (É PARA DAR 0)
+    checagem = (variacao - deltaX)/vX0[:,None]
+    
+    #CRESCIMENTO
+    deltaX_porcentagem = (deltaX/ vX0[:,None])
+    
+    #A FUNCAO RETORNA UMA MATRIZ EM QUE A PRIMEIRA COLUNA É A VARIACAO DE VX, A SEGUNDA E TERCEIRA OS DOIS COMPONENTES DA FORMULA E A QUARTA A COLUNA DE CHECAGEM
+    resultado = np.column_stack((deltaX_porcentagem*100, deltaX_porcentagem*((50)*mudanca_tec)/deltaX,deltaX_porcentagem*((50)*mudanca_demanda_final)/deltaX,checagem/deltaX))
+    
+    cLabels = ["DeltaX", "Mudança na Tecnologia", "Mudança na Demanda Final","Checagem"] 
+    
+    dPlanilha = pd.ExcelWriter("C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/Resultado_Decomposição/Porcentagem/"+"Resultados_Decomposição_"+str(ano0)+"_X_"+str(ano1)+".xlsx")
+    df1 = pd.DataFrame(resultado, index=sLabel, columns=cLabels, dtype=float)
+    df1.to_excel(dPlanilha, sheet_name = str(ano0)+"X"+str(ano1), header = True, index = True)
+    dPlanilha.save()  
+
+    return resultado
+  
+   
+"""**Código Principal**
+Carregando As Trus
+"""
+
+if __name__ == '__main__':
+
+    
+ #APLICANDO A FUNCAO DE DECOMPOSICAO QUE CHAMA AS OUTRAS FUNCOES DENTRO DE SI MESMA
+ #COMO É POSSIVEL OBSERVAR, A MAIORIA DOS RSULTADOS APRESENTA A COLUNA DE CHECAGEM PROXIMA DE 0, MAS UM NUMERO CONSIDERAVEL NAO (NAO SEI DIZER DE ONDE VIRIA ESTE ERRO)
+ #OS CASOS MAIS PREOCUPANTES SAO AQUELES DAS TABELAS ANTERIORES A 2009
+ sCaminho = "C:/Users/neide/OneDrive/Documentos/python_spyder/IBGE - CONTAS NACIONAIS 2019/Nível51/resultado_deflacionado/Nomes_Setores.xlsx"
+ 
+
+ sLabel_Auxiliar = pd.read_excel(sCaminho, header=None, index_col=None) 
+ sLabel = sLabel_Auxiliar[0:36][4]
+ 
+ vSD0001 = Gera_Decomposicao_porcentagem(2000, 2010, sLabel) 
