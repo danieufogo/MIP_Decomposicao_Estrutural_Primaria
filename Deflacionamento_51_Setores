@@ -1,0 +1,875 @@
+import pandas as pd
+import numpy as np
+
+"""Declaraçao de Funções"""
+
+#Lê a aba de cada tabela
+
+def Le_MatrizTRU(sCaminho, sTabelaRecursos, sPlanilha,  nLinhaInicial, nColunaInicial, nLinhas, nColunas):
+  mSheet = pd.read_excel(sCaminho+sTabelaRecursos, sheet_name=sPlanilha, header=None, index_col=None)
+  mMatriz = mSheet.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]  
+  return mMatriz
+  
+#Divide a tabela a precos correntes pela tabela a precos do ano anterior (constantes) resulta no deflator ano-ano por celula
+
+def GeraDeflator(sCaminho, sTabelaCorrente, sTabelaAnterior,sPlanilha, nLinhaInicial,nColunaInicial,nLinhas,nColunas):
+  mSheetCorrente  = pd.read_excel(sCaminho+sTabelaCorrente,sheet_name = sPlanilha, header=None, index_col=None)
+  mSheetAnterior  = pd.read_excel(sCaminho+sTabelaAnterior,sheet_name = sPlanilha, header=None, index_col=None)
+  mMatrizCorrente = mSheetCorrente.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]
+  mMatrizAnterior = mSheetAnterior.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]
+  mMatrizDividida = np.divide(mMatrizCorrente,mMatrizAnterior,  out=np.ones_like(mMatrizAnterior), where=mMatrizAnterior!=0)
+  return mMatrizDividida
+  
+#Gera mudanças de preços relativos e mudanças de quantidades (de acordo com o método de deflacionamento de Reich)
+
+def GeraDeflatorDeltaq(sCaminho, sTabelaCorrente, sTabelaAnterior,sPlanilha, nLinhaInicial,nColunaInicial,nLinhas,nColunas,deflator):
+  mSheetCorrente  = pd.read_excel(sCaminho+sTabelaCorrente,sheet_name = sPlanilha, header=None, index_col=None)
+  mSheetAnterior  = pd.read_excel(sCaminho+sTabelaAnterior,sheet_name = sPlanilha, header=None, index_col=None)
+  mMatrizCorrente = mSheetCorrente.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]
+  mMatrizAnterior = mSheetAnterior.values[nLinhaInicial:nLinhaInicial+nLinhas,nColunaInicial:nColunaInicial+nColunas]
+  mMnumerador     = mMatrizCorrente - mMatrizAnterior
+  mMatrizDividida = mMnumerador*deflator
+  return mMatrizDividida
+
+
+
+
+if __name__ == '__main__':
+  
+  
+  #Caminho que leva a pasta onde estão salvas todas as tabelas TRU de 51 setores (tab 1, 2,3 e 4)
+  
+  sCaminho                           ='COLOCAR AQUI O CAMINHO PARA A PASTA'
+  nSetores                           = 51
+  nProdutos                          = 107
+  
+  
+  #Posicoes de cada aba para cada tabela (1 e 3) e (2 e 4) - os nomes dos objetos correspondem a aba
+  
+  nLinhaInicialCI                    = 5
+  nColunaInicialCI                   = 1
+  nLinhasCI                          = nProdutos 
+  nColunasCI                         = nSetores  
+  
+  nLinhaInicialDemanda               = 5
+  nColunaInicialDemanda              = 1
+  nLinhasDemanda                     = nProdutos
+  nColunasDemanda                    = 8   
+   
+ 
+  nLinhaInicialVA                    = 5
+  nColunaInicialVA                   = 1
+  nLinhasVA                          = 12
+  nColunasVA                         = nSetores 
+  
+  nLinhaInicialOferta                = 5
+  nColunaInicialOferta               = 1
+  nLinhasOferta                      = nProdutos 
+  nColunasOferta                     = 9 
+  
+  nLinhaInicialProducao              = 5
+  nColunaInicialProducao             = 1
+  nLinhasProducao                    = nProdutos
+  nColunasProducao                   = nSetores   
+  
+  
+  #Importacao é um caso especial pois de 2010 para frente, o arquivo conta com 3 colunas ao inves de uma (caso entre 2000 e 2009)
+  
+  nLinhaInicialImportacao0009        = 5
+  nColunaInicialImportacao0009       = 1
+  nLinhasImportacao0009              = nProdutos
+  nColunasImportacao0009             = 3 
+
+  nLinhaInicialImportacao0919        = 5
+  nColunaInicialImportacao0919       = 1
+  nLinhasImportacao0919              = nProdutos
+  nColunasImportacao0919             = 1   
+  
+  sPlanilhaOferta                    = 'oferta'
+  sPlanilhaProducao                  = 'producao'
+  sPlanilhaImportacao                = 'importacao'
+  sPlanilhaCI                        = 'CI'
+  sPlanilhaDemanda                   = 'demanda'
+  sPlanilhaVA                        = 'VA'
+  
+  nAnoMIP00                          ='2000.xls'
+  nAnoMIP01                          ='2001.xls'
+  nAnoMIP02                          ='2002.xls'
+  nAnoMIP03                          ='2003.xls'
+  nAnoMIP04                          ='2004.xls'
+  nAnoMIP05                          ='2005.xls'
+  nAnoMIP06                          ='2006.xls'
+  nAnoMIP07                          ='2007.xls'
+  nAnoMIP08                          ='2008.xls'
+  nAnoMIP09                          ='2009.xls'
+  nAnoMIP10                          ='2010.xls'
+  nAnoMIP11                          ='2011.xls'
+  nAnoMIP12                          ='2012.xls'
+  nAnoMIP13                          ='2013.xls'
+  nAnoMIP14                          ='2014.xls'
+  nAnoMIP15                          ='2015.xls'
+  nAnoMIP16                          ='2016.xls'
+  nAnoMIP17                          ='2017.xls'
+  nAnoMIP18                          ='2018.xls'
+  nAnoMIP19                          ='2019.xls'
+  
+  sTab1                               = str(nSetores) + '_tab1_'
+  sTab2                               = str(nSetores) + '_tab2_'
+  sTab3                               = str(nSetores) + '_tab3_'
+  sTab4                               = str(nSetores) + '_tab4_'
+
+  #Lendo cada tabela das TRUs
+  
+  mCI00                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP00,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI01                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP01,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI02                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP02,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI03                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP03,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI04                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP04,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI05                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP05,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI06                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP06,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI07                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP07,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI08                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP08,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI09                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP09,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI10                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP10,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI11                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP11,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI12                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP12,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI13                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP13,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI14                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP14,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI15                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP15,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI16                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP16,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI17                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP17,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI18                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP18,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI19                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP19,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  
+  mDemanda00                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP00,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda01                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP01,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda02                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP02,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda03                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP03,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda04                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP04,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda05                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP05,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda06                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP06,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda07                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP07,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda08                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP08,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda09                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP09,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda10                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP10,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda11                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP11,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda12                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP12,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda13                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP13,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda14                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP14,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda15                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP15,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda16                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP16,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda17                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP17,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda18                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP18,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+  mDemanda19                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP19,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda)
+
+  
+  mVA00                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP00,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA01                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP01,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA02                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP02,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA03                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP03,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA04                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP04,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA05                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP05,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA06                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP06,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA07                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP07,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA08                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP08,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA09                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP09,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA10                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP10,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA11                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP11,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA12                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP12,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA13                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP13,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA14                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP14,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA15                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP15,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA16                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP16,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA17                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP17,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA18                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP18,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  mVA19                              = Le_MatrizTRU(sCaminho,sTab2+nAnoMIP19,sPlanilhaVA,nLinhaInicialVA,nColunaInicialVA,nLinhasVA,nColunasVA)
+  
+  mOferta00                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP00,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta01                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP01,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta02                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP02,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta03                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP03,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta04                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP04,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta05                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP05,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta06                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP06,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta07                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP07,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta08                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP08,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta09                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP09,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta10                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP10,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta11                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP11,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta12                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP12,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta13                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP13,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta14                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP14,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta15                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP15,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta16                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP16,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta17                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP17,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta18                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP18,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+  mOferta19                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP19,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta)
+ 
+  mProducao00                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP00,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao01                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP01,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao02                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP02,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao03                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP03,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao04                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP04,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao05                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP05,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao06                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP06,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao07                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP07,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao08                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP08,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao09                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP09,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao10                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP10,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao11                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP11,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao12                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP12,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao13                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP13,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao14                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP14,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao15                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP15,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao16                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP16,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao17                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP17,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao18                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP18,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao19                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP19,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+ 
+  mImportacao00                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP00,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao01                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP01,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao02                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP02,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao03                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP03,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao04                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP04,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao05                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP05,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao06                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP06,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao07                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP07,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao08                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP08,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  mImportacao09                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP09,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009)
+  
+  mImportacao10                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP10,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao11                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP11,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao12                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP12,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao13                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP13,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao14                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP14,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao15                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP15,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao16                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP16,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao17                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP17,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao18                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP18,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  mImportacao19                              = Le_MatrizTRU(sCaminho,sTab1+nAnoMIP19,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919)
+  
+  mProducao011                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP01,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao021                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP02,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao031                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP03,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao041                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP04,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao051                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP05,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao061                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP06,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao071                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP07,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao081                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP08,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao091                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP09,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao101                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP10,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao111                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP11,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao121                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP12,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao131                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP13,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao141                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP14,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao151                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP15,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao161                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP16,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao171                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP17,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao181                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP18,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)
+  mProducao191                              = Le_MatrizTRU(sCaminho,sTab3+nAnoMIP19,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao)  
+  
+
+  mCI011                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP01,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI021                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP02,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI031                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP03,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI041                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP04,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI051                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP05,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI061                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP06,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI071                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP07,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI081                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP08,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI091                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP09,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI101                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP10,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI111                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP11,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI121                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP12,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI131                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP13,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI141                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP14,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI151                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP15,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI161                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP16,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI171                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP17,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI181                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP18,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)
+  mCI191                              = Le_MatrizTRU(sCaminho,sTab4+nAnoMIP19,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI)  
+  
+  #calculando os deflatores encadeados do VA (pode ser utilizado o VBP no lugar - VA linha 10)
+
+  mVBPDef0100                          = (np.sum(mProducao01) - np.sum(mCI01))/(np.sum(mProducao011) - np.sum(mCI011)) 
+  mVBPDef0201                          = (np.sum(mProducao02) - np.sum(mCI02))/(np.sum(mProducao021) - np.sum(mCI021)) 
+  mVBPDef0302                          = (np.sum(mProducao03) - np.sum(mCI03))/(np.sum(mProducao031) - np.sum(mCI031)) 
+  mVBPDef0403                          = (np.sum(mProducao04) - np.sum(mCI04))/(np.sum(mProducao041) - np.sum(mCI041)) 
+  mVBPDef0504                          = (np.sum(mProducao05) - np.sum(mCI05))/(np.sum(mProducao051) - np.sum(mCI051)) 
+  mVBPDef0605                          = (np.sum(mProducao06) - np.sum(mCI06))/(np.sum(mProducao061) - np.sum(mCI061)) 
+  mVBPDef0706                          = (np.sum(mProducao07) - np.sum(mCI07))/(np.sum(mProducao071) - np.sum(mCI071)) 
+  mVBPDef0807                          = (np.sum(mProducao08) - np.sum(mCI08))/(np.sum(mProducao081) - np.sum(mCI081)) 
+  mVBPDef0908                          = (np.sum(mProducao09) - np.sum(mCI09))/(np.sum(mProducao091) - np.sum(mCI091)) 
+  mVBPDef1009                          = (np.sum(mProducao10) - np.sum(mCI10))/(np.sum(mProducao101) - np.sum(mCI101)) 
+  mVBPDef1110                          = (np.sum(mProducao11) - np.sum(mCI11))/(np.sum(mProducao111) - np.sum(mCI111)) 
+  mVBPDef1211                          = (np.sum(mProducao12) - np.sum(mCI12))/(np.sum(mProducao121) - np.sum(mCI121)) 
+  mVBPDef1312                          = (np.sum(mProducao13) - np.sum(mCI13))/(np.sum(mProducao131) - np.sum(mCI131)) 
+  mVBPDef1413                          = (np.sum(mProducao14) - np.sum(mCI14))/(np.sum(mProducao141) - np.sum(mCI141)) 
+  mVBPDef1514                          = (np.sum(mProducao15) - np.sum(mCI15))/(np.sum(mProducao151) - np.sum(mCI151)) 
+  mVBPDef1615                          = (np.sum(mProducao16) - np.sum(mCI16))/(np.sum(mProducao161) - np.sum(mCI161)) 
+  mVBPDef1716                          = (np.sum(mProducao17) - np.sum(mCI17))/(np.sum(mProducao171) - np.sum(mCI171)) 
+  mVBPDef1817                          = (np.sum(mProducao18) - np.sum(mCI18))/(np.sum(mProducao181) - np.sum(mCI181)) 
+  mVBPDef1918                          = (np.sum(mProducao19) - np.sum(mCI19))/(np.sum(mProducao191) - np.sum(mCI191))  
+
+  #calculando os precos relativos do VBP (VA por Residuo)
+  
+  mMPrecoRelativoVBP0019      =  mVBPDef0100 * mVBPDef0201 * mVBPDef0302 * mVBPDef0403 * mVBPDef0504 * mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0119      =  mVBPDef0201 * mVBPDef0302 * mVBPDef0403 * mVBPDef0504 * mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0219      =  mVBPDef0302 * mVBPDef0403 * mVBPDef0504 * mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0319      =  mVBPDef0403 * mVBPDef0504 * mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0419      =  mVBPDef0504 * mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0519      =  mVBPDef0605 * mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0619      =  mVBPDef0706 * mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0719      =  mVBPDef0807 * mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0819      =  mVBPDef0908 * mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP0919      =  mVBPDef1009 * mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1019      =  mVBPDef1110 * mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1119      =  mVBPDef1211 * mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1219      =  mVBPDef1312 * mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1319      =  mVBPDef1413 * mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1419      =  mVBPDef1514 * mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1519      =  mVBPDef1615 * mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1619      =  mVBPDef1716 * mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1719      =  mVBPDef1817 * mVBPDef1918
+  mMPrecoRelativoVBP1819      =  mVBPDef1918
+
+  #Gerando os indices de Deflacionamento (base ano 2000 - perceba que o ano base - aquele que divie a todos - deve ficar na ultima linha
+  
+  mMPrecoRelativoVBP1219                = np.divide(mMPrecoRelativoVBP1219,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1319                = np.divide(mMPrecoRelativoVBP1319,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1419                = np.divide(mMPrecoRelativoVBP1419,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1519                = np.divide(mMPrecoRelativoVBP1519,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1619                = np.divide(mMPrecoRelativoVBP1619,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1719                = np.divide(mMPrecoRelativoVBP1719,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1819                = np.divide(mMPrecoRelativoVBP1819,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0) 
+  mMPrecoRelativoVBP1919                = np.divide(1,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0119                = np.divide(mMPrecoRelativoVBP0119,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0219                = np.divide(mMPrecoRelativoVBP0219,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0319                = np.divide(mMPrecoRelativoVBP0319,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0419                = np.divide(mMPrecoRelativoVBP0419,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0519                = np.divide(mMPrecoRelativoVBP0519,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0619                = np.divide(mMPrecoRelativoVBP0619,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0719                = np.divide(mMPrecoRelativoVBP0719,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0819                = np.divide(mMPrecoRelativoVBP0819,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0919                = np.divide(mMPrecoRelativoVBP0919,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP1019                = np.divide(mMPrecoRelativoVBP1019,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)    
+  mMPrecoRelativoVBP1119                = np.divide(mMPrecoRelativoVBP1119,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+  mMPrecoRelativoVBP0019                = np.divide(mMPrecoRelativoVBP0019,mMPrecoRelativoVBP0019,out =np.ones_like(mMPrecoRelativoVBP0019),where = mMPrecoRelativoVBP0019!=0)
+
+ #Deflacionando pelo indice Geral de preços, isto é, retirando mudanças gerais de preços
+ 
+  mCI00PC =  mCI00  * mMPrecoRelativoVBP0019
+  mCI01PC1 = mCI01 * mMPrecoRelativoVBP0119
+  mCI02PC1 = mCI02 * mMPrecoRelativoVBP0219
+  mCI03PC1 = mCI03 * mMPrecoRelativoVBP0319
+  mCI04PC1 = mCI04 * mMPrecoRelativoVBP0419
+  mCI05PC1 = mCI05 * mMPrecoRelativoVBP0519
+  mCI06PC1 = mCI06 * mMPrecoRelativoVBP0619
+  mCI07PC1 = mCI07 * mMPrecoRelativoVBP0719
+  mCI08PC1 = mCI08 * mMPrecoRelativoVBP0819
+  mCI09PC1 = mCI09 * mMPrecoRelativoVBP0919
+  mCI10PC1 = mCI10 * mMPrecoRelativoVBP1019
+  mCI11PC1 = mCI11 * mMPrecoRelativoVBP1119
+  mCI12PC1 = mCI12 * mMPrecoRelativoVBP1219
+  mCI13PC1 = mCI13 * mMPrecoRelativoVBP1319
+  mCI14PC1 = mCI14 * mMPrecoRelativoVBP1419
+  mCI15PC1 = mCI15 * mMPrecoRelativoVBP1519
+  mCI16PC1 = mCI16 * mMPrecoRelativoVBP1619
+  mCI17PC1 = mCI17 * mMPrecoRelativoVBP1719
+  mCI18PC1 = mCI18 * mMPrecoRelativoVBP1819
+  mCI19PC1 = mCI19 * mMPrecoRelativoVBP1919
+  
+  #Ajustando mudanças no poder de compra real dos setores (preços relativos e quantidades ver Reich no PDF)
+  
+  tVCIq18    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP18,sTab2+nAnoMIP17,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1719)
+  tVCIp18    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP18,sTab4+nAnoMIP18,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1719)
+  mCI18PC    = mCI18PC1 + tVCIq18 + tVCIp18
+
+  tVCIq19    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP19,sTab2+nAnoMIP18,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1819)
+  tVCIp19    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP19,sTab4+nAnoMIP19,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1819)
+  mCI19PC    = mCI19PC1 + tVCIq19 + tVCIp19
+
+  tVCIq17    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP17,sTab2+nAnoMIP16,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1619)
+  tVCIp17    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP17,sTab4+nAnoMIP17,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1619)
+  mCI17PC    = mCI17PC1 + tVCIq17 + tVCIp17
+
+  tVCIq16    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP16,sTab2+nAnoMIP15,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1519)
+  tVCIp16    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP16,sTab4+nAnoMIP16,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1519)
+  mCI16PC    = mCI16PC1 + tVCIq16 + tVCIp16
+
+  tVCIq15    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP15,sTab2+nAnoMIP14,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1419)
+  tVCIp15    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP15,sTab4+nAnoMIP15,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1419)
+  mCI15PC    = mCI15PC1 + tVCIq15 + tVCIp15
+
+  tVCIq14    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP14,sTab2+nAnoMIP13,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1319)
+  tVCIp14    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP14,sTab4+nAnoMIP14,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1319)
+  mCI14PC    = mCI14PC1 + tVCIq14 + tVCIp14
+
+  tVCIq13    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP13,sTab2+nAnoMIP12,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1219)
+  tVCIp13    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP13,sTab4+nAnoMIP13,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1219)
+  mCI13PC    = mCI13PC1 + tVCIq13 + tVCIp13
+
+  tVCIq12    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP12,sTab2+nAnoMIP11,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1119)
+  tVCIp12    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP12,sTab4+nAnoMIP12,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1119)
+  mCI12PC    = mCI12PC1 + tVCIq12 + tVCIp12
+
+  tVCIq11    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP11,sTab2+nAnoMIP10,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1019)
+  tVCIp11    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP11,sTab4+nAnoMIP11,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP1019)
+  mCI11PC    = mCI11PC1 + tVCIq11 + tVCIp11
+
+  tVCIq10    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP10,sTab2+nAnoMIP09,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0919)
+  tVCIp10    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP10,sTab4+nAnoMIP10,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0919)
+  mCI10PC    = mCI10PC1 + tVCIq10 + tVCIp10
+
+  tVCIq09    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP09,sTab2+nAnoMIP08,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0819)
+  tVCIp09    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP09,sTab4+nAnoMIP09,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0819)
+  mCI09PC    = mCI09PC1 + tVCIq09 + tVCIp09
+
+  tVCIq08    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP08,sTab2+nAnoMIP07,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0719)
+  tVCIp08    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP08,sTab4+nAnoMIP08,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0719)
+  mCI08PC    = mCI08PC1 + tVCIq08 + tVCIp08
+
+  tVCIq07    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP07,sTab2+nAnoMIP06,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0619)
+  tVCIp07    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP07,sTab4+nAnoMIP07,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0619)
+  mCI07PC    = mCI07PC1 + tVCIq07 + tVCIp07
+  
+  tVCIq06    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP06,sTab2+nAnoMIP05,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0519)
+  tVCIp06    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP06,sTab4+nAnoMIP06,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0519)
+  mCI06PC    = mCI06PC1 + tVCIq06 + tVCIp06  
+
+  tVCIq05    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP05,sTab2+nAnoMIP04,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0419)
+  tVCIp05    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP05,sTab4+nAnoMIP05,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0419)
+  mCI05PC    = mCI05PC1 + tVCIq05 + tVCIp05  
+  
+  tVCIq04    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP04,sTab2+nAnoMIP03,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0319)
+  tVCIp04    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP04,sTab4+nAnoMIP04,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0319)
+  mCI04PC    = mCI04PC1 + tVCIq04 + tVCIp04  
+  
+  tVCIq03    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP03,sTab2+nAnoMIP02,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0219)
+  tVCIp03    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP03,sTab4+nAnoMIP03,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0219)
+  mCI03PC    = mCI03PC1 + tVCIq03 + tVCIp03
+
+  tVCIq02    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP02,sTab2+nAnoMIP01,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0119)
+  tVCIp02    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP02,sTab4+nAnoMIP02,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0119)
+  mCI02PC    = mCI02PC1 + tVCIq02 + tVCIp02
+
+  tVCIq01    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP01,sTab2+nAnoMIP00,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0019)
+  tVCIp01    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP01,sTab4+nAnoMIP01,sPlanilhaCI,nLinhaInicialCI,nColunaInicialCI,nLinhasCI,nColunasCI, mMPrecoRelativoVBP0019)
+  mCI01PC    = mCI01PC1 + tVCIq01 + tVCIp01
+
+  mDemanda00PC = mDemanda00  * mMPrecoRelativoVBP0019
+  mDemanda01PC1 = mDemanda01 * mMPrecoRelativoVBP0119
+  mDemanda02PC1 = mDemanda02 * mMPrecoRelativoVBP0219
+  mDemanda03PC1 = mDemanda03 * mMPrecoRelativoVBP0319
+  mDemanda04PC1 = mDemanda04 * mMPrecoRelativoVBP0419
+  mDemanda05PC1 = mDemanda05 * mMPrecoRelativoVBP0519
+  mDemanda06PC1 = mDemanda06 * mMPrecoRelativoVBP0619
+  mDemanda07PC1 = mDemanda07 * mMPrecoRelativoVBP0719
+  mDemanda08PC1 = mDemanda08 * mMPrecoRelativoVBP0819
+  mDemanda09PC1 = mDemanda09 * mMPrecoRelativoVBP0919
+  mDemanda10PC1 = mDemanda10 * mMPrecoRelativoVBP1019
+  mDemanda11PC1 = mDemanda11 * mMPrecoRelativoVBP1119
+  mDemanda12PC1 = mDemanda12 * mMPrecoRelativoVBP1219
+  mDemanda13PC1 = mDemanda13 * mMPrecoRelativoVBP1319
+  mDemanda14PC1 = mDemanda14 * mMPrecoRelativoVBP1419
+  mDemanda15PC1 = mDemanda15 * mMPrecoRelativoVBP1519
+  mDemanda16PC1 = mDemanda16 * mMPrecoRelativoVBP1619
+  mDemanda17PC1 = mDemanda17 * mMPrecoRelativoVBP1719
+  mDemanda18PC1 = mDemanda18 * mMPrecoRelativoVBP1819
+  mDemanda19PC1 = mDemanda19 * mMPrecoRelativoVBP1919
+  
+  tVDemandaq18    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP18,sTab2+nAnoMIP17,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1719)
+  tVDemandap18    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP18,sTab4+nAnoMIP18,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1719)
+  mDemanda18PC    = mDemanda18PC1 + tVDemandaq18 + tVDemandap18
+
+  tVDemandaq19    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP19,sTab2+nAnoMIP18,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1819)
+  tVDemandap19    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP19,sTab4+nAnoMIP19,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1819)
+  mDemanda19PC    = mDemanda19PC1 + tVDemandaq19 + tVDemandap19
+
+  tVDemandaq17    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP17,sTab2+nAnoMIP16,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1619)
+  tVDemandap17    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP17,sTab4+nAnoMIP17,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1619)
+  mDemanda17PC    = mDemanda17PC1 + tVDemandaq17 + tVDemandap17
+
+  tVDemandaq16    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP16,sTab2+nAnoMIP15,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1519)
+  tVDemandap16    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP16,sTab4+nAnoMIP16,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1519)
+  mDemanda16PC    = mDemanda16PC1 + tVDemandaq16 + tVDemandap16
+
+  tVDemandaq15    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP15,sTab2+nAnoMIP14,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1419)
+  tVDemandap15    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP15,sTab4+nAnoMIP15,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1419)
+  mDemanda15PC    = mDemanda15PC1 + tVDemandaq15 + tVDemandap15
+
+  tVDemandaq14    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP14,sTab2+nAnoMIP13,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1319)
+  tVDemandap14    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP14,sTab4+nAnoMIP14,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1319)
+  mDemanda14PC    = mDemanda14PC1 + tVDemandaq14 + tVDemandap14
+
+  tVDemandaq13    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP13,sTab2+nAnoMIP12,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1219)
+  tVDemandap13    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP13,sTab4+nAnoMIP13,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1219)
+  mDemanda13PC    = mDemanda13PC1 + tVDemandaq13 + tVDemandap13
+
+  tVDemandaq12    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP12,sTab2+nAnoMIP11,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1119)
+  tVDemandap12    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP12,sTab4+nAnoMIP12,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1119)
+  mDemanda12PC    = mDemanda12PC1 + tVDemandaq12 + tVDemandap12
+
+  tVDemandaq11    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP11,sTab2+nAnoMIP10,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1019)
+  tVDemandap11    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP11,sTab4+nAnoMIP11,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP1019)
+  mDemanda11PC    = mDemanda11PC1 + tVDemandaq11 + tVDemandap11
+
+  tVDemandaq10    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP10,sTab2+nAnoMIP09,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0919)
+  tVDemandap10    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP10,sTab4+nAnoMIP10,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0919)
+  mDemanda10PC    = mDemanda10PC1 + tVDemandaq10 + tVDemandap10
+
+  tVDemandaq09    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP09,sTab2+nAnoMIP08,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0819)
+  tVDemandap09    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP09,sTab4+nAnoMIP09,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0819)
+  mDemanda09PC    = mDemanda09PC1 + tVDemandaq09 + tVDemandap09
+
+  tVDemandaq08    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP08,sTab2+nAnoMIP07,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0719)
+  tVDemandap08    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP08,sTab4+nAnoMIP08,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0719)
+  mDemanda08PC    = mDemanda08PC1 + tVDemandaq08 + tVDemandap08
+
+  tVDemandaq07    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP07,sTab2+nAnoMIP06,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0619)
+  tVDemandap07    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP07,sTab4+nAnoMIP07,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0619)
+  mDemanda07PC    = mDemanda07PC1 + tVDemandaq07 + tVDemandap07
+  
+  tVDemandaq06    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP06,sTab2+nAnoMIP05,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0519)
+  tVDemandap06    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP06,sTab4+nAnoMIP06,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0519)
+  mDemanda06PC    = mDemanda06PC1 + tVDemandaq06 + tVDemandap06  
+
+  tVDemandaq05    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP05,sTab2+nAnoMIP04,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0419)
+  tVDemandap05    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP05,sTab4+nAnoMIP05,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0419)
+  mDemanda05PC    = mDemanda05PC1 + tVDemandaq05 + tVDemandap05  
+  
+  tVDemandaq04    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP04,sTab2+nAnoMIP03,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0319)
+  tVDemandap04    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP04,sTab4+nAnoMIP04,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0319)
+  mDemanda04PC    = mDemanda04PC1 + tVDemandaq04 + tVDemandap04  
+  
+  tVDemandaq03    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP03,sTab2+nAnoMIP02,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0219)
+  tVDemandap03    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP03,sTab4+nAnoMIP03,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0219)
+  mDemanda03PC    = mDemanda03PC1 + tVDemandaq03 + tVDemandap03
+
+  tVDemandaq02    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP02,sTab2+nAnoMIP01,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0119)
+  tVDemandap02    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP02,sTab4+nAnoMIP02,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0119)
+  mDemanda02PC    = mDemanda02PC1 + tVDemandaq02 + tVDemandap02
+
+  tVDemandaq01    = GeraDeflatorDeltaq(sCaminho,sTab4+nAnoMIP01,sTab2+nAnoMIP00,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0019)
+  tVDemandap01    = GeraDeflatorDeltaq(sCaminho,sTab2+nAnoMIP01,sTab4+nAnoMIP01,sPlanilhaDemanda,nLinhaInicialDemanda,nColunaInicialDemanda,nLinhasDemanda,nColunasDemanda, mMPrecoRelativoVBP0019)
+  mDemanda01PC    = mDemanda01PC1 + tVDemandaq01 + tVDemandap01 
+
+  
+  mVA00PC = mVA00 * mMPrecoRelativoVBP0019
+  mVA01PC = mVA01 * mMPrecoRelativoVBP0119
+  mVA02PC = mVA02 * mMPrecoRelativoVBP0219
+  mVA03PC = mVA03 * mMPrecoRelativoVBP0319
+  mVA04PC = mVA04 * mMPrecoRelativoVBP0419
+  mVA05PC = mVA05 * mMPrecoRelativoVBP0519
+  mVA06PC = mVA06 * mMPrecoRelativoVBP0619
+  mVA07PC = mVA07 * mMPrecoRelativoVBP0719
+  mVA08PC = mVA08 * mMPrecoRelativoVBP0819
+  mVA09PC = mVA09 * mMPrecoRelativoVBP0919
+  mVA10PC = mVA10 * mMPrecoRelativoVBP1019
+  mVA11PC = mVA11 * mMPrecoRelativoVBP1119
+  mVA12PC = mVA12 * mMPrecoRelativoVBP1219
+  mVA13PC = mVA13 * mMPrecoRelativoVBP1319
+  mVA14PC = mVA14 * mMPrecoRelativoVBP1419
+  mVA15PC = mVA15 * mMPrecoRelativoVBP1519
+  mVA16PC = mVA16 * mMPrecoRelativoVBP1619
+  mVA17PC = mVA17 * mMPrecoRelativoVBP1719
+  mVA18PC = mVA18 * mMPrecoRelativoVBP1819
+  mVA19PC = mVA19 * mMPrecoRelativoVBP1919
+  
+ 
+  
+  mOferta00PC =  mOferta00  * mMPrecoRelativoVBP0019
+  mOferta01PC1 = mOferta01 * mMPrecoRelativoVBP0119
+  mOferta02PC1 = mOferta02 * mMPrecoRelativoVBP0219
+  mOferta03PC1 = mOferta03 * mMPrecoRelativoVBP0319
+  mOferta04PC1 = mOferta04 * mMPrecoRelativoVBP0419
+  mOferta05PC1 = mOferta05 * mMPrecoRelativoVBP0519
+  mOferta06PC1 = mOferta06 * mMPrecoRelativoVBP0619
+  mOferta07PC1 = mOferta07 * mMPrecoRelativoVBP0719
+  mOferta08PC1 = mOferta08 * mMPrecoRelativoVBP0819
+  mOferta09PC1 = mOferta09 * mMPrecoRelativoVBP0919
+  mOferta10PC1 = mOferta10 * mMPrecoRelativoVBP1019
+  mOferta11PC1 = mOferta11 * mMPrecoRelativoVBP1119
+  mOferta12PC1 = mOferta12 * mMPrecoRelativoVBP1219
+  mOferta13PC1 = mOferta13 * mMPrecoRelativoVBP1319
+  mOferta14PC1 = mOferta14 * mMPrecoRelativoVBP1419
+  mOferta15PC1 = mOferta15 * mMPrecoRelativoVBP1519
+  mOferta16PC1 = mOferta16 * mMPrecoRelativoVBP1619
+  mOferta17PC1 = mOferta17 * mMPrecoRelativoVBP1719
+  mOferta18PC1 = mOferta18 * mMPrecoRelativoVBP1819
+  mOferta19PC1 = mOferta19 * mMPrecoRelativoVBP1919
+  
+  tVOfertaq18    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP18,sTab1+nAnoMIP17,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1719)
+  tVOfertap18    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP18,sTab3+nAnoMIP18,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1719)
+  mOferta18PC    = mOferta18PC1 + tVOfertaq18 + tVOfertap18
+
+  tVOfertaq19    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP19,sTab1+nAnoMIP18,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1819)
+  tVOfertap19    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP19,sTab3+nAnoMIP19,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1819)
+  mOferta19PC    = mOferta19PC1 + tVOfertaq19 + tVOfertap19
+
+  tVOfertaq17    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP17,sTab1+nAnoMIP16,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1619)
+  tVOfertap17    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP17,sTab3+nAnoMIP17,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1619)
+  mOferta17PC    = mOferta17PC1 + tVOfertaq17 + tVOfertap17
+
+  tVOfertaq16    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP16,sTab1+nAnoMIP15,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1519)
+  tVOfertap16    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP16,sTab3+nAnoMIP16,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1519)
+  mOferta16PC    = mOferta16PC1 + tVOfertaq16 + tVOfertap16
+
+  tVOfertaq15    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP15,sTab1+nAnoMIP14,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1419)
+  tVOfertap15    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP15,sTab3+nAnoMIP15,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1419)
+  mOferta15PC    = mOferta15PC1 + tVOfertaq15 + tVOfertap15
+
+  tVOfertaq14    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP14,sTab1+nAnoMIP13,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1319)
+  tVOfertap14    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP14,sTab3+nAnoMIP14,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1319)
+  mOferta14PC    = mOferta14PC1 + tVOfertaq14 + tVOfertap14
+
+  tVOfertaq13    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP13,sTab1+nAnoMIP12,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1219)
+  tVOfertap13    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP13,sTab3+nAnoMIP13,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1219)
+  mOferta13PC    = mOferta13PC1 + tVOfertaq13 + tVOfertap13
+
+  tVOfertaq12    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP12,sTab1+nAnoMIP11,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1119)
+  tVOfertap12    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP12,sTab3+nAnoMIP12,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1119)
+  mOferta12PC    = mOferta12PC1 + tVOfertaq12 + tVOfertap12
+
+  tVOfertaq11    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP11,sTab1+nAnoMIP10,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1019)
+  tVOfertap11    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP11,sTab3+nAnoMIP11,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP1019)
+  mOferta11PC    = mOferta11PC1 + tVOfertaq11 + tVOfertap11
+
+  tVOfertaq10    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP10,sTab1+nAnoMIP09,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0919)
+  tVOfertap10    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP10,sTab3+nAnoMIP10,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0919)
+  mOferta10PC    = mOferta10PC1 + tVOfertaq10 + tVOfertap10
+
+  tVOfertaq09    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP09,sTab1+nAnoMIP08,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0819)
+  tVOfertap09    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP09,sTab3+nAnoMIP09,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0819)
+  mOferta09PC    = mOferta09PC1 + tVOfertaq09 + tVOfertap09
+
+  tVOfertaq08    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP08,sTab1+nAnoMIP07,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0719)
+  tVOfertap08    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP08,sTab3+nAnoMIP08,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0719)
+  mOferta08PC    = mOferta08PC1 + tVOfertaq08 + tVOfertap08
+
+  tVOfertaq07    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP07,sTab1+nAnoMIP06,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0619)
+  tVOfertap07    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP07,sTab3+nAnoMIP07,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0619)
+  mOferta07PC    = mOferta07PC1 + tVOfertaq07 + tVOfertap07
+  
+  tVOfertaq06    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP06,sTab1+nAnoMIP05,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0519)
+  tVOfertap06    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP06,sTab3+nAnoMIP06,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0519)
+  mOferta06PC    = mOferta06PC1 + tVOfertaq06 + tVOfertap06  
+
+  tVOfertaq05    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP05,sTab1+nAnoMIP04,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0419)
+  tVOfertap05    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP05,sTab3+nAnoMIP05,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0419)
+  mOferta05PC    = mOferta05PC1 + tVOfertaq05 + tVOfertap05  
+  
+  tVOfertaq04    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP04,sTab1+nAnoMIP03,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0319)
+  tVOfertap04    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP04,sTab3+nAnoMIP04,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0319)
+  mOferta04PC    = mOferta04PC1 + tVOfertaq04 + tVOfertap04  
+  
+  tVOfertaq03    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP03,sTab1+nAnoMIP02,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0219)
+  tVOfertap03    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP03,sTab3+nAnoMIP03,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0219)
+  mOferta03PC    = mOferta03PC1 + tVOfertaq03 + tVOfertap03
+
+  tVOfertaq02    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP02,sTab1+nAnoMIP01,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0119)
+  tVOfertap02    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP02,sTab3+nAnoMIP02,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0119)
+  mOferta02PC    = mOferta02PC1 + tVOfertaq02 + tVOfertap02
+
+  tVOfertaq01    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP01,sTab1+nAnoMIP00,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0019)
+  tVOfertap01    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP01,sTab3+nAnoMIP01,sPlanilhaOferta,nLinhaInicialOferta,nColunaInicialOferta,nLinhasOferta,nColunasOferta, mMPrecoRelativoVBP0019)
+  mOferta01PC    = mOferta01PC1 + tVOfertaq01 + tVOfertap01 
+
+  mProducao00PC = mProducao00  * mMPrecoRelativoVBP0019
+  mProducao01PC1 = mProducao01 * mMPrecoRelativoVBP0119
+  mProducao02PC1 = mProducao02 * mMPrecoRelativoVBP0219
+  mProducao03PC1 = mProducao03 * mMPrecoRelativoVBP0319
+  mProducao04PC1 = mProducao04 * mMPrecoRelativoVBP0419
+  mProducao05PC1 = mProducao05 * mMPrecoRelativoVBP0519
+  mProducao06PC1 = mProducao06 * mMPrecoRelativoVBP0619
+  mProducao07PC1 = mProducao07 * mMPrecoRelativoVBP0719
+  mProducao08PC1 = mProducao08 * mMPrecoRelativoVBP0819
+  mProducao09PC1 = mProducao09 * mMPrecoRelativoVBP0919
+  mProducao10PC1 = mProducao10 * mMPrecoRelativoVBP1019
+  mProducao11PC1 = mProducao11 * mMPrecoRelativoVBP1119
+  mProducao12PC1 = mProducao12 * mMPrecoRelativoVBP1219
+  mProducao13PC1 = mProducao13 * mMPrecoRelativoVBP1319
+  mProducao14PC1 = mProducao14 * mMPrecoRelativoVBP1419
+  mProducao15PC1 = mProducao15 * mMPrecoRelativoVBP1519
+  mProducao16PC1 = mProducao16 * mMPrecoRelativoVBP1619
+  mProducao17PC1 = mProducao17 * mMPrecoRelativoVBP1719
+  mProducao18PC1 = mProducao18 * mMPrecoRelativoVBP1819
+  mProducao19PC1 = mProducao19 * mMPrecoRelativoVBP1919  
+  
+  
+  
+  tVProducaoq18    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP18,sTab1+nAnoMIP17,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1719)
+  tVProducaop18    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP18,sTab3+nAnoMIP18,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1719)
+  mProducao18PC    = mProducao18PC1 + tVProducaoq18 + tVProducaop18
+
+  tVProducaoq19    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP19,sTab1+nAnoMIP18,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1819)
+  tVProducaop19    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP19,sTab3+nAnoMIP19,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1819)
+  mProducao19PC    = mProducao19PC1 + tVProducaoq19 + tVProducaop19
+
+  tVProducaoq17    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP17,sTab1+nAnoMIP16,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1619)
+  tVProducaop17    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP17,sTab3+nAnoMIP17,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1619)
+  mProducao17PC    = mProducao17PC1 + tVProducaoq17 + tVProducaop17
+
+  tVProducaoq16    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP16,sTab1+nAnoMIP15,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1519)
+  tVProducaop16    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP16,sTab3+nAnoMIP16,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1519)
+  mProducao16PC    = mProducao16PC1 + tVProducaoq16 + tVProducaop16
+
+  tVProducaoq15    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP15,sTab1+nAnoMIP14,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1419)
+  tVProducaop15    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP15,sTab3+nAnoMIP15,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1419)
+  mProducao15PC    = mProducao15PC1 + tVProducaoq15 + tVProducaop15
+
+  tVProducaoq14    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP14,sTab1+nAnoMIP13,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1319)
+  tVProducaop14    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP14,sTab3+nAnoMIP14,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1319)
+  mProducao14PC    = mProducao14PC1 + tVProducaoq14 + tVProducaop14
+
+  tVProducaoq13    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP13,sTab1+nAnoMIP12,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1219)
+  tVProducaop13    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP13,sTab3+nAnoMIP13,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1219)
+  mProducao13PC    = mProducao13PC1 + tVProducaoq13 + tVProducaop13
+
+  tVProducaoq12    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP12,sTab1+nAnoMIP11,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1119)
+  tVProducaop12    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP12,sTab3+nAnoMIP12,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1119)
+  mProducao12PC    = mProducao12PC1 + tVProducaoq12 + tVProducaop12
+
+  tVProducaoq11    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP11,sTab1+nAnoMIP10,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1019)
+  tVProducaop11    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP11,sTab3+nAnoMIP11,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP1019)
+  mProducao11PC    = mProducao11PC1 + tVProducaoq11 + tVProducaop11
+
+  tVProducaoq10    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP10,sTab1+nAnoMIP09,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0919)
+  tVProducaop10    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP10,sTab3+nAnoMIP10,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0919)
+  mProducao10PC    = mProducao10PC1 + tVProducaoq10 + tVProducaop10
+
+  tVProducaoq09    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP09,sTab1+nAnoMIP08,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0819)
+  tVProducaop09    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP09,sTab3+nAnoMIP09,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0819)
+  mProducao09PC    = mProducao09PC1 + tVProducaoq09 + tVProducaop09
+
+  tVProducaoq08    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP08,sTab1+nAnoMIP07,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0719)
+  tVProducaop08    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP08,sTab3+nAnoMIP08,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0719)
+  mProducao08PC    = mProducao08PC1 + tVProducaoq08 + tVProducaop08
+
+  tVProducaoq07    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP07,sTab1+nAnoMIP06,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0619)
+  tVProducaop07    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP07,sTab3+nAnoMIP07,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0619)
+  mProducao07PC    = mProducao07PC1 + tVProducaoq07 + tVProducaop07
+  
+  tVProducaoq06    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP06,sTab1+nAnoMIP05,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0519)
+  tVProducaop06    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP06,sTab3+nAnoMIP06,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0519)
+  mProducao06PC    = mProducao06PC1 + tVProducaoq06 + tVProducaop06  
+
+  tVProducaoq05    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP05,sTab1+nAnoMIP04,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0419)
+  tVProducaop05    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP05,sTab3+nAnoMIP05,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0419)
+  mProducao05PC    = mProducao05PC1 + tVProducaoq05 + tVProducaop05  
+  
+  tVProducaoq04    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP04,sTab1+nAnoMIP03,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0319)
+  tVProducaop04    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP04,sTab3+nAnoMIP04,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0319)
+  mProducao04PC    = mProducao04PC1 + tVProducaoq04 + tVProducaop04  
+  
+  tVProducaoq03    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP03,sTab1+nAnoMIP02,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0219)
+  tVProducaop03    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP03,sTab3+nAnoMIP03,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0219)
+  mProducao03PC    = mProducao03PC1 + tVProducaoq03 + tVProducaop03
+
+  tVProducaoq02    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP02,sTab1+nAnoMIP01,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0119)
+  tVProducaop02    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP02,sTab3+nAnoMIP02,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0119)
+  mProducao02PC    = mProducao02PC1 + tVProducaoq02 + tVProducaop02
+
+  tVProducaoq01    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP01,sTab1+nAnoMIP00,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0019)
+  tVProducaop01    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP01,sTab3+nAnoMIP01,sPlanilhaProducao,nLinhaInicialProducao,nColunaInicialProducao,nLinhasProducao,nColunasProducao, mMPrecoRelativoVBP0019)
+  mProducao01PC    = mProducao01PC1 + tVProducaoq01 + tVProducaop01 
+
+ 
+  mImportacao00PC = mImportacao00  * mMPrecoRelativoVBP0019
+  mImportacao01PC1 = mImportacao01 * mMPrecoRelativoVBP0119
+  mImportacao02PC1 = mImportacao02 * mMPrecoRelativoVBP0219
+  mImportacao03PC1 = mImportacao03 * mMPrecoRelativoVBP0319
+  mImportacao04PC1 = mImportacao04 * mMPrecoRelativoVBP0419
+  mImportacao05PC1 = mImportacao05 * mMPrecoRelativoVBP0519
+  mImportacao06PC1 = mImportacao06 * mMPrecoRelativoVBP0619
+  mImportacao07PC1 = mImportacao07 * mMPrecoRelativoVBP0719
+  mImportacao08PC1 = mImportacao08 * mMPrecoRelativoVBP0819
+  mImportacao09PC1 = mImportacao09 * mMPrecoRelativoVBP0919
+  mImportacao10PC1 = mImportacao10 * mMPrecoRelativoVBP1019
+  mImportacao11PC1 = mImportacao11 * mMPrecoRelativoVBP1119
+  mImportacao12PC1 = mImportacao12 * mMPrecoRelativoVBP1219
+  mImportacao13PC1 = mImportacao13 * mMPrecoRelativoVBP1319
+  mImportacao14PC1 = mImportacao14 * mMPrecoRelativoVBP1419
+  mImportacao15PC1 = mImportacao15 * mMPrecoRelativoVBP1519
+  mImportacao16PC1 = mImportacao16 * mMPrecoRelativoVBP1619
+  mImportacao17PC1 = mImportacao17 * mMPrecoRelativoVBP1719
+  mImportacao18PC1 = mImportacao18 * mMPrecoRelativoVBP1819
+  mImportacao19PC1 = mImportacao19 * mMPrecoRelativoVBP1919  
+  
+  tVImportacaoq18    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP18,sTab1+nAnoMIP17,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1719)
+  tVImportacaop18    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP18,sTab3+nAnoMIP18,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1719)
+  mImportacao18PC    = mImportacao18PC1 + tVImportacaoq18 + tVImportacaop18
+
+  tVImportacaoq19    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP19,sTab1+nAnoMIP18,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1819)
+  tVImportacaop19    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP19,sTab3+nAnoMIP19,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1819)
+  mImportacao19PC    = mImportacao19PC1 + tVImportacaoq19 + tVImportacaop19
+
+  tVImportacaoq17    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP17,sTab1+nAnoMIP16,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1619)
+  tVImportacaop17    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP17,sTab3+nAnoMIP17,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1619)
+  mImportacao17PC    = mImportacao17PC1 + tVImportacaoq17 + tVImportacaop17
+
+  tVImportacaoq16    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP16,sTab1+nAnoMIP15,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1519)
+  tVImportacaop16    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP16,sTab3+nAnoMIP16,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1519)
+  mImportacao16PC    = mImportacao16PC1 + tVImportacaoq16 + tVImportacaop16
+
+  tVImportacaoq15    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP15,sTab1+nAnoMIP14,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1419)
+  tVImportacaop15    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP15,sTab3+nAnoMIP15,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1419)
+  mImportacao15PC    = mImportacao15PC1 + tVImportacaoq15 + tVImportacaop15
+
+  tVImportacaoq14    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP14,sTab1+nAnoMIP13,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1319)
+  tVImportacaop14    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP14,sTab3+nAnoMIP14,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1319)
+  mImportacao14PC    = mImportacao14PC1 + tVImportacaoq14 + tVImportacaop14
+
+  tVImportacaoq13    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP13,sTab1+nAnoMIP12,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1219)
+  tVImportacaop13    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP13,sTab3+nAnoMIP13,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1219)
+  mImportacao13PC    = mImportacao13PC1 + tVImportacaoq13 + tVImportacaop13
+
+  tVImportacaoq12    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP12,sTab1+nAnoMIP11,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1119)
+  tVImportacaop12    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP12,sTab3+nAnoMIP12,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1119)
+  mImportacao12PC    = mImportacao12PC1 + tVImportacaoq12 + tVImportacaop12
+
+  tVImportacaoq11    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP11,sTab1+nAnoMIP10,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1019)
+  tVImportacaop11    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP11,sTab3+nAnoMIP11,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP1019)
+  mImportacao11PC    = mImportacao11PC1 + tVImportacaoq11 + tVImportacaop11
+
+  tVImportacaoq10    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP10,sTab1+nAnoMIP09,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP0919)
+  tVImportacaop10    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP10,sTab3+nAnoMIP10,sPlanilhaImportacao,nLinhaInicialImportacao0919,nColunaInicialImportacao0919,nLinhasImportacao0919,nColunasImportacao0919, mMPrecoRelativoVBP0919)
+  mImportacao10PC    = mImportacao10PC1 + tVImportacaoq10 + tVImportacaop10
+
+  tVImportacaoq09    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP09,sTab1+nAnoMIP08,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0819)
+  tVImportacaop09    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP09,sTab3+nAnoMIP09,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0819)
+  mImportacao09PC    = mImportacao09PC1 + tVImportacaoq09 + tVImportacaop09
+
+  tVImportacaoq08    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP08,sTab1+nAnoMIP07,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0719)
+  tVImportacaop08    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP08,sTab3+nAnoMIP08,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0719)
+  mImportacao08PC    = mImportacao08PC1 + tVImportacaoq08 + tVImportacaop08
+
+  tVImportacaoq07    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP07,sTab1+nAnoMIP06,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0619)
+  tVImportacaop07    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP07,sTab3+nAnoMIP07,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0619)
+  mImportacao07PC    = mImportacao07PC1 + tVImportacaoq07 + tVImportacaop07
+  
+  tVImportacaoq06    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP06,sTab1+nAnoMIP05,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0519)
+  tVImportacaop06    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP06,sTab3+nAnoMIP06,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0519)
+  mImportacao06PC    = mImportacao06PC1 + tVImportacaoq06 + tVImportacaop06  
+
+  tVImportacaoq05    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP05,sTab1+nAnoMIP04,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0419)
+  tVImportacaop05    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP05,sTab3+nAnoMIP05,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0419)
+  mImportacao05PC    = mImportacao05PC1 + tVImportacaoq05 + tVImportacaop05  
+  
+  tVImportacaoq04    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP04,sTab1+nAnoMIP03,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0319)
+  tVImportacaop04    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP04,sTab3+nAnoMIP04,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0319)
+  mImportacao04PC    = mImportacao04PC1 + tVImportacaoq04 + tVImportacaop04  
+  
+  tVImportacaoq03    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP03,sTab1+nAnoMIP02,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0219)
+  tVImportacaop03    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP03,sTab3+nAnoMIP03,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0219)
+  mImportacao03PC    = mImportacao03PC1 + tVImportacaoq03 + tVImportacaop03
+
+  tVImportacaoq02    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP02,sTab1+nAnoMIP01,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0119)
+  tVImportacaop02    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP02,sTab3+nAnoMIP02,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0119)
+  mImportacao02PC    = mImportacao02PC1 + tVImportacaoq02 + tVImportacaop02
+
+  tVImportacaoq01    = GeraDeflatorDeltaq(sCaminho,sTab3+nAnoMIP01,sTab1+nAnoMIP00,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0019)
+  tVImportacaop01    = GeraDeflatorDeltaq(sCaminho,sTab1+nAnoMIP01,sTab3+nAnoMIP01,sPlanilhaImportacao,nLinhaInicialImportacao0009,nColunaInicialImportacao0009,nLinhasImportacao0009,nColunasImportacao0009, mMPrecoRelativoVBP0019)
+  mImportacao01PC    = mImportacao01PC1 + tVImportacaoq01 + tVImportacaop01 
+  
+  ####Agora é possivel adicionar linhas a mais para que todas as tabelas sejam salvas em uma pasta no dispositivo local
